@@ -61,6 +61,8 @@ Growth	Hacking AB实验 数据建模
 
 SAS	MATLAB	
 
++
+
 
 
 -优先考虑能够在Kaldi/TensorFlow/PyTorch/Keras  TensorFlow/Caffe/MXNet/ 上 开展实验者  等深度学习框架实战经验。                            
