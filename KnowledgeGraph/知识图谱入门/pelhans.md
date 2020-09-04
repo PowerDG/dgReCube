@@ -1,4 +1,4 @@
-
+ 
 
 # 知识图谱入门
 
@@ -1323,6 +1323,603 @@ TF-IDF主要用来评估某个字或者用某个词对一个文档的重要程�
 ## Ref
 
 [王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+发布于 2018-07-07
+
+#  (七)  知识推理
+
+欢迎大家关注我的博客 [http://pelhans.com/](https://link.zhihu.com/?target=http%3A//pelhans.com/) ，所有文章都会第一时间发布在那里哦~
+
+------
+
+> 本节对本体任务推理做一个简单的介绍，并介绍本体推理任务的分类。而后对本体推理的方法和工具做一个介绍。
+
+## 知识推理简介
+
+## 知识推理任务分类
+
+​       所谓推理就是通过各种方法**获取新的知识或者结论**，这些知识和结论满足语义。其具体任务可分为可满足性(satisfiability)、分类(classification)、实例化(materialization)。
+
+​        可满足性可体现在本体上或概念上，在本体上即本体可满足性是检查一个本体是否可满足，即检查该本体是否有模型。如果本体不满足，说明存在不一致。概念可满足性即检查某一概念的可满足性，即检查是否具有模型，使得针对该概念的解释不是空集。
+
+![img](pelhans.assets/v2-d8c445262c75ee8b72f823bdace76c5d_720w.jpg)
+
+​        上图是两个不可满足的例子，第一个本体那个是说，Man 和 Women 的交集是空集，那么就不存在同一个本体Allen 既是Man 又是Women。 第二个概念是说概念Eternity是一个空集，那么他不具有模型，即不可满足。
+
+​        分类，针对Tbox的推理，计算新的概念包含关系。如:
+
+![img](pelhans.assets/v2-fa08fcd540affe767116bc90e7dceda7_720w.jpg)
+
+​       即若Mother 是 Women的子集，Women是 Person的子集，那么我们就可以得出 Mother是 Person的子集这个新类别关系。
+
+​      实例化即计算属于某个概念或关系的所有**实例的集合**。如:
+
+![img](pelhans.assets/v2-e6b97843c5be66a40208bf4d2800af4f_720w.jpg)
+
+​       第一个是计算新的类实例信息，首先已知Alice 是Mother，Mother 是 Women的子集，那么可知Alice  是一个Women。即为Women增加了一个新的实例。下面那个是计算新的二元关系，已知Alice 和Bob 有儿子，同时has_son  是has_child的子类，那么可知Alice 和Bob has_child。
+
+## 知识推理简介
+
+​        OWL本体语言是知识图谱中最规范(W3C制定)、最严谨(采用描述逻辑)。表达能力最强的语言(是一阶谓词逻辑的子集)，它基于RDF语法，使表示出来的文档具有语义理解的结构基础。促进了统一词汇表的使用，定义了丰富的语义词汇。同时允许逻辑推理。
+
+​      关于OWL语言的规范性我们再之前讨论过，此处我们介绍一下它的逻辑基础：描述逻辑。
+
+## 描述逻辑
+
+​      **描述逻辑(Description Logic)是基于对象的知识表示的形式化，也叫概念表示语言或术语逻辑，是一阶谓词逻辑的一个可判定子集。**
+
+​      一个**描述逻辑系统**由四个基本部分组成：
+
+- 最基本的元素：概念、关系、个体    
+- TBox术语集：概念术语的公理集合    
+- Abox断言集：个体的断言集合    
+- TBox 和 ABox上的推理机制
+
+​      **不同的描述逻辑系统的表示能力与推理机制由于对这四个组分的不同选择而不同。**下面对四个组分中的概念做一个简单介绍。
+
+- 最基本的元素有概念、关系、个体。  *概念即解释为一个领域的子集，如*![[公式]](pelhans.assets/equation-20200904172230903)
+- 关系解释为该领域上的二元关系(笛卡尔积)，如 <x,y> |*friend*(*x*,*y*)
+- 个体解释为一个领域内的实例，如小明：{Ming}
+
+​      TBox为术语集，它是泛化的知识，是描述概念和关系的知识，被称之为公理(Axiom)。由于概念之间存在包含关系，TBox  知识形成类似格(Lattice)的结构，这种结构是由包含关系决定的，与具体实现无关。TBox语言有定义和包含，其中定义为引入概念及关系的名称，如Mother、Person、has_child，包含指声明包含关系的公理，例如 ![[公式]](pelhans.assets/equation?tex=+Mother+%5Csqsubseteq+%5Cexists+has_child.Person+) 
+
+​      ABox是断言集，指具体个体的信息，ABox包含外延知识(又称为断言(Assertion)), 描述论域中的特定个体。**描述逻辑的知识库 K:= ， T即TBOx， A即ABOx。**ABox 语言包含概念断言和关系断言，概念断言即表示一个对象是否属于某个概念，例如Mother(Alice)、Person(Bob)。关系断言表示两个对象是否满足特定的关系，例如 has_child(Alice, Bob)。
+
+​      描述逻辑语义：解释I是知识库K的模型,当且仅当I是K中每个断言的模型。若一个知识库K有一个模型,则称K是可满足的。若断言σ对于K的每个模型都是满足的,则称K逻辑蕴含σ,记为 ![[公式]](pelhans.assets/equation-20200904172231027) 。对概念C,若K有一个模型I使得 ![[公式]](pelhans.assets/equation-20200904172231025) 则称C是可满足的。
+
+描述逻辑依据提供的构造算子,在简单的概念和关系上构造出复杂的概念和关系。描述逻辑至少包含以下构造算子:交 ( ![[公式]](pelhans.assets/equation-20200904172231030) ),并( ![[公式]](pelhans.assets/equation-20200904172230947) ),非 (¬),存在量词 ( ![[公式]](pelhans.assets/equation-20200904172231024) )和全称量词 ( ![[公式]](pelhans.assets/equation-20200904172231028) )。有了语义之后,我们可以进行推理。通过语义来保证推理的正确和完备性。
+
+下图给出描述逻辑的语义表:
+
+![img](pelhans.assets/v2-d324976b8a0fac4d3af487110f3a81d1_720w.jpg)
+
+因为OWL采用描述逻辑，因此下图给出了描述逻辑与OWL词汇的对应表：
+
+![img](pelhans.assets/v2-9b280ef8564cbe8c538cbf23f154c598_720w.jpg)
+
+## 本体推理方法与工具介绍
+
+​      基于本体推理的方法常见的有基于Tableaux运算的方法、基于逻辑编程改写的方法、基于一阶查询重写的方法、基于产生式规则的方法等。
+
+- 基于Tableaux运算适用于检查某一本体的可满足性，以及实例检测。    
+- 基于逻辑编程改写的方法可以根据特定的场景定制规则，以实现用户自定义的推理过程。    
+- 基于一节查询重写的方法可以高效低结合不同数据格式的数据源，重写方法关联起了不同的查询语言。以Datalog语言为中间语言,首先重写SPARQL语言为Datalog,再将Datalog重写为SQL查询；     
+- 一种前向推理系统,可以按照一定机制执行规则从而达到某些目标,与一阶逻辑类似,也有区别；
+
+下面对上面的几种方法做详细介绍。
+
+## 基于Tableaux运算
+
+基于Tableaux运算适用于检查某一本体的可满足性，以及实例检测。其基本思想是通过一系列规则构建Abox,以检测可满足性,或者检测某一实例是否存在于某概念。这种思想类似于一阶逻辑的归结反驳。
+
+Tableaux运算规则(以主要DL算子举例)如下：
+
+![img](pelhans.assets/v2-25af7b92ae713ef6e310b0f0e2ddf674_720w.jpg)
+
+​      这里对第一个解释一下，其他的类似。第一个是说如果C 和D(x) 的合取是 ![[公式]](pelhans.assets/equation-20200904172231026) ，同时呢C(x) 和 D(x) 却不在 ![[公式]](pelhans.assets/equation-20200904172231077) 里，那么也就是说 ![[公式]](https://www.zhihu.com/equation?tex=+%5Cvarnothing) 有可能只包含了部分C，而C(x)不在里面，那么我们就把它们添加到 ![[公式]](https://www.zhihu.com/equation?tex=+%5Cvarnothing) 里。下面我们举个实际的例子:
+
+现在给定如下本体，检测实例Allen 是否在 Woman中? 即:
+
+![[公式]](pelhans.assets/equation-20200904172231083) 
+
+![[公式]](pelhans.assets/equation-20200904172231082) 
+
+检测 Woman(Allen)？其解决流程为:
+
+- 首先加入带反驳的结论:
+
+![[公式]](pelhans.assets/equation-20200904172231094) 
+
+![[公式]](pelhans.assets/equation-20200904172231127) 
+
+- 初始Abox，记为 ![[公式]](pelhans.assets/equation-20200904172231118) ，其内包含 ![[公式]](pelhans.assets/equation-20200904172231206) 。
+- 运用 ![[公式]](pelhans.assets/equation-20200904172231199-9211351.) 规则，得到 ![[公式]](pelhans.assets/equation-20200904172231127-9211351.) 。将其加入到 ![[公式]](pelhans.assets/equation-20200904172231139) 中，现在的 ![[公式]](https://www.zhihu.com/equation?tex=+%5Cvarnothing+) 为 ![[公式]](pelhans.assets/equation-20200904172231189) 。
+- 运用 ![[公式]](pelhans.assets/equation-20200904172231172) 规则到 ![[公式]](pelhans.assets/equation-20200904172231199) 与 ![[公式]](pelhans.assets/equation-20200904172231083) 上，得到 ![[公式]](pelhans.assets/equation-20200904172231215) 。此时的 ![[公式]](https://www.zhihu.com/equation?tex=+%5Cvarnothing+) 包含 ![[公式]](pelhans.assets/equation-20200904172231243) 。
+- 运用 ![[公式]](pelhans.assets/equation-20200904172231244) 规则，拒绝现在的 ![[公式]](https://www.zhihu.com/equation?tex=+%5Cvarnothing) 。
+- 得出Allen 不在Woman的结论。如果Woman(Allen)在初始情况已存在于原始本体,那么推导出该本体不可满足!
+
+​      Tableaux运算的基于Herbrand模型，Herbrand模型你可以把它简单的理解为所有可满足模型的最小模型，具体的可以去看逻辑方面的书。
+
+## 相关工具简介
+
+![img](pelhans.assets/v2-15a052793f23680337f1f8c33eb56870_720w.jpg)
+
+## 基于逻辑编程改写的方法
+
+本体推理具有一定的局限性，如仅支持预定义的本体公理上的推理，无法针对自定义的词汇支持灵活推理；用户无法定义自己的推理过程等。因此引入**规则推理**，它可以根据特定的场景定制规则,以实现用户自定义的推理过程。
+
+基于以上描述，引入Datalog语言，它可以结合本体推理和规则推理。面向知识库和数据库设计的逻辑语言,表达能力与OWL相当,支持递归，便于撰写规则，实现推理。
+
+![img](pelhans.assets/v2-1f4b15812d694969ec5a30e209adecc1_720w.jpg)
+
+Datalog 的基本语法包含:
+
+- 原子(Atom): ![[公式]](pelhans.assets/equation-20200904172231255) ， 其中p是谓词,n是目数, ![[公式]](pelhans.assets/equation-20200904172231258) 是项 (变量或常量)，例如 has_child(X, Y)；    
+- 规则(Rule)： ![[公式]](pelhans.assets/equation-20200904172231268) ，由原子构建，其中H 是头部原子， ![[公式]](pelhans.assets/equation-20200904172231287) 是体部原子。例如:  has_child X, Y : −has_son X, Y    
+- 事实(Fact)： ![[公式]](pelhans.assets/equation-20200904172231283) ，它是没有体部且没有变量的规则，例如  has_child Alice, Bob : −     
+- Datalog程序是规则的集合
+
+下图给出一个Datalog 推理的例子：
+
+![img](pelhans.assets/v2-dadce9c42cb34190ea8823245d6e3cdf_720w.jpg)
+
+## 相关工具简介
+
+![img](pelhans.assets/v2-3de63aca151a1c6f422d0d559ab335b3_720w.jpg)
+
+## 基于一阶查询重写的方法
+
+​      基于查询重写我们可以高效地结合不同数据格式的数据源；同时重写方法关联起了不同的查询语言。
+
+​      一阶查询是具有一阶逻辑形式的语言，因为Datalog是数据库的一种查询语言，同时具有一阶逻辑形式，因此可以以Datalog 为中间语言，首先重写SPARQL 语言为Datalog ，再将Datalog 重写为SQL 查询。
+
+![[公式]](pelhans.assets/equation-20200904172231306) 
+
+下图给出查询重写的基本流程:
+
+![img](pelhans.assets/v2-e3bb7c41cde4fed306a675dda4b7e38c_720w.jpg)
+
+## 查询重写举例
+
+查询所有研究人员及其所从事的项目? 用 SPARQL表述为:
+
+![img](pelhans.assets/v2-bb7084779ae26e1ece27e73c8c4c0ab8_720w.jpg)
+
+给定Datalog 规则如下:
+
+![img](pelhans.assets/v2-92ff901561afc533300c10f88cef9bb2_720w.jpg)
+
+底层数据具体为某数据库中为下图中的两张表:
+
+![img](pelhans.assets/v2-86bc46f3d6620e911a82a35b1bc4045a_720w.jpg)
+
+- 步骤一： 重写为Datalog 查询
+
+- - 过滤不需要的公理 (通过语法层过滤)
+
+![img](pelhans.assets/v2-416dd01bf15feaa6840d01d4a30b6a69_720w.jpg)
+
+- - 生成所有相关的Datalog 查询
+
+![img](pelhans.assets/v2-babc5ff7609f52ea1c826df5c202b75d_720w.jpg)
+
+- 步骤二： 将数据库关系表达式映射成Datalog原子
+
+![img](pelhans.assets/v2-355d55cbc207c68a955c965d5284dba5_720w.jpg)
+
+- 步骤三：将从SPARQL以及数据库重写过来的Datalog 规则整合进行查询
+
+![img](pelhans.assets/v2-3d74d44ba7ab4a14153857ea1b7576ac_720w.jpg)
+
+## [Ontop 工具](https://link.zhihu.com/?target=http%3A//obda.inf.unibz.it/)
+
+- 最先进的OBDA 系统，兼容RDFs、OWL 2 QL、R2RML、SPARQL标准    
+- 支持主流关系数据库： Oracle、MySQL、SQL Server、Postgres
+
+## 基于产生式规则的方法
+
+产生式系统是一种前向推理系统，可以按照一定机制执行规则从而达到某些目标，与一阶逻辑类似，但也有区别。被应用于自动规划、专家系统上。
+
+产生式系统由: **事实集合(Working Memory)、产生式/规则集合、推理引擎**组成:
+
+- 事实集/运行内存(Working Memory, WM): 是事实的集合，用于存储当前系统中所有事实。    
+
+- - 事实(Working Memory Element, WME)，包含描述对象和描述关系。描述对象形如 ![[公式]](pelhans.assets/equation?tex=(type+attr_1+%253A+val_1+attr_2+%253A+val_2+...+attr_n+%253A+val_n+)) ,其中type, ![[公式]](pelhans.assets/equation-20200904172231311) 均为原子 (常量)， 例如 (student name: Alice age: 24)。描述关系(Refication)，例如  (basicFact relation: olderThan firstArg: John secondArg:  Alice)简记为(olderThan John Alice)。
+
+
+
+- 产生式集合(Production Memory, PM)就是产生式的集合。。。。产生式就是类似于 ![[公式]](pelhans.assets/equation-20200904172231318) 这种的语句。其中conditions 是由条件组成的集合，又称为LHS。 actions 是由动作组成的序列，称为RHS 。    
+
+- - LHS 是条件(condition)的集合，各条件之间是且的关系，当LHS 中所有条件均被满足，则该规则触发。条件的形式为: ![[公式]](pelhans.assets/equation?tex=(+type+attr_1+%253A+spec_1+attr_2+%253A+spec_2+...+attr_n+%253A+spec_n+)) 
+  - RHS是动作序列，即执行时的顺序，是依次执行的，动作的种类包含 ADD pattern、 REMOVE i、MODIFY i( attr spec ) 。
+  - 举个例子: IF (Student name:x ) Then ADD (Person name:x )    
+
+- 推理引擎： 它可以控制系统的执行，包含 模式匹配(用规则的条件**部分匹配**事实集中的事实,整个LHS都被满足的规则被触发,并被加入议程(agenda))、解决冲突(按一定的策略从被触发的多条规则中选择一条)、执行动作(执行被选择出来的规则的RHS,从而对WM进行一定的操作)。
+
+产生式系统的执行流程如下图所示:
+
+![img](pelhans.assets/v2-ed2530580b025465356ee724b3c97ca4_720w.jpg)
+
+上面的WM 和产生式集合是我们定义的数据，相当于ABox 和 TBox，中间部分是推理引擎。其实大部分推理系统都是由这三部分组成。
+
+## 模式匹配 RETE 算法
+
+**模式匹配即 用每条规则的条件部分匹配当前WM。**，一种高效的模式匹配算法是RETE 算法，1979年由Charles Forgy (CMU)提出， 将产生式的LHS组织成判别网络形式，是一种典型的以空间换时间的算法。其流程如下图所示:
+
+![img](pelhans.assets/v2-f970c37e732b47bd9c2e93a0028a6a26_720w.jpg)
+
+## 相关工具介绍
+
+## Drools
+
+Drools 是商用规则管理系统，其中提供了一个规则推理引擎，核心算法是基于RETE算法的改进。提供规则定义语言 ，支持嵌入Java代码。
+
+## Jena
+
+Jena 用于构建语义网应用Java 框架，提供了处理RDF、RDFs、OWL 数据的接口，还提供了一个规则引擎。提供了三元组的内存存储于查询。
+
+## RDF4J
+
+RDF4J 是一个处理RDF 数据的开源框架，支持语义数据的解析、存储、推理和查询。能够关联几乎所有RDF存储系统，能够用于访问远程RDF存储。
+
+## 相关工具总结
+
+![img](pelhans.assets/v2-e875940dc755dafcf9b14f0a7a538c59_720w.jpg)
+
+## Ref
+
+[王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+发布于 2018-07-07
+
+[知识图谱](https://www.zhihu.com/topic/19838204)
+
+[自然语言处理](https://www.zhihu.com/topic/19560026)
+
+# (八)  语义搜索
+
+欢迎大家关注我的博客 [http://pelhans.com/](https://link.zhihu.com/?target=http%3A//pelhans.com/) ，所有文章都会第一时间发布在那里哦~
+
+------
+
+> 本节对语义搜索做一个简单的介绍，而后介绍语义数据搜索、混合搜索。该部分理解不深，后续会进一步补充。本系列笔记为王昊奋老师知识图谱课程的学习笔记，若理解有偏差还请指正。课程购买连接在文末。
+
+## 语义搜索简介
+
+​        什么是语义搜索，借用万维网之父Tim Berners-Lee的解释 “**语义搜索的本质是通过数学来拜托当今搜索中使用的猜测和近似，并为词语的含义以及它们如何关联到我们在搜索引擎输入框中所找的东西引进一种清晰的理解方式，**
+
+不同的搜索模式之间的技术差异可以分为:
+
+- 对用户需求的表示(query model)    
+- 对底层数据的表示(data model)    
+- 匹配方法(matching technique)
+
+​       以前常用的搜索是基于文档的检索(document retrieval  )。信息检索(IR)支持对文档的检索，它通过轻量级的语法模型表示用户的检索需求和资源内容，如 AND  OR。即目前占主导地位的关键词模式：词袋模型。它对主题搜索的效果很好，但**不能应对更加复杂的信息检索需求**。
+
+​       数据库(DB) 和知识库专家系统(Knowledge-based Expert System)可以提供更加精确的答案(data  retrieval)。它使用表达能力更强的模型来表示用户的需求、利用数据之间的内在结构和语义关联、允许复杂的查询、返回精确匹配查询的具体答案。
+
+语义搜索答题可分为两类：
+
+- DB 和KB 系统属于重量级语义搜索系统，它对语义**显示的和形式化的建模**，例如 ER图或 RDF(S) 和OWL 中的知识模型。主要为**语义的数据检索系统**。
+- 基于语义的IR 系统属于轻量级的语义搜索系统。采用轻量级的语义模型，例如分类系统或者辞典。语义数据(RDF)嵌入文档或者与文档关联。它是基于**语义的文档检索系统**。
+
+随着结构化和语义数据的可用性越来越高，数据Web搜索和文档Web搜索有逐渐融合的趋势。
+
+- 对于Web搜索，采用传统上应用于IR 领域的，扩展性较好的方法，来处理WEb 数据的质量问题，和与长文本描述相关的数据元素。
+- 对于文档Web搜索，数据库和语义搜索技术被应用到IR系统中，以便在搜索过程中结合运用日益增加的，高度结构化和表达能力强的数据。
+
+语义搜索的流程图如下图所示：
+
+![img](pelhans.assets/v2-19447486c92e86286cf5cac5bae91788_720w.jpg)
+
+## 语义数据搜索
+
+语义数据搜索具有以下难点:
+
+- 可扩展性： 语义数据搜索对链接数据的有效利用要求基础架构能扩展和应用在大规模和不断增长的内链数据上。    
+- 异构性： 数据源的异构性、多数据源查询、合并多数据源的查询结果。    
+- 不确定性： 用户需求的表示不完整    
+
+下面介绍一些基于三元组存储的语义数据搜索最佳实践及其对应原理。
+
+- 基于IR：Sindice， FalconS；是单一数据结构和查询算法，针对文本数据进行排序检索来优化。它的数据是高度可压缩的，可访问的。排序是组成部分。但不能处理简单的select，join等操作。
+- 基于DB：Oracle的RDF扩展，DB2的SOR；具有各种索引和查询算法，以适应各种对结构化数据的复杂查询。优点是能够完成复杂的selects，joins,...(SQL,  SPARQL)，能够对高动态场景(许多插入/删除)。缺点是由于使用B+树，空间的开销大和访问的局限性。同时来自叶子节点的结果没有集成对检索结果的排序。
+- 原生存储(Native stores)：Dataplore, YARS,  RDF-3x；优点是高度可压缩，可访问。类似于IR的检索排序。类似于DB的selects和joins操作。可在亚秒级实践内在单台机器上完成对TB数据的查询。支持高动态操作。缺点是没有事务、恢复等。
+
+## 存储和索引(Semplore，Dataplore的前身)
+
+​      重用IR 索引来索引语义数据。它的核心想法是将RDF转换称具有fields 和terms的虚拟文档。IR索引基于以下概念:
+
+- 文档    
+- 字段(field)，例如标题、摘要、正文、作者....    
+- 词语(terms)    
+- Posting list 和Position list
+
+​      下面以一个例子来理解上面的术语:
+
+![img](pelhans.assets/v2-ea2fd6d7b53b56a19f550434e4723981_720w.jpg)
+
+​      当新插入元素时，不可能完全重建索引，因此需要使用增量索引。当前的增量索引需要遍历Posting  list，非常耗时，因此需要将Posting list  进行分块，但更多的快需要更多的随机访问来定位这些块，同时更多的快需要更多的空间开销。因此需要权衡索引更新，搜索和索引大小。
+
+## 排序和索引
+
+​      上面建立的索引并存储。现在我们需要对其进行检索，对于检索我们需要支持四种基本的操作:
+
+- 基础的检索：(f, t)    
+- 归并排序：m(S1, op, S2)    
+- 概念表达式计算: ![[公式]](pelhans.assets/equation-20200904172259632) ，如 
+   ![[公式]](pelhans.assets/equation-20200904172259631) 
+- 关系扩展(Relation Expansion): ![[公式]](pelhans.assets/equation-20200904172259623) ，
+  如 ![[公式]](pelhans.assets/equation-20200904172259622) **，这个是需要我们去完善的**
+
+​      那么如何进行复杂的查询呢？下图给出一个例子：
+
+![img](pelhans.assets/v2-19263d7044f0730406128064b2f1e77a_720w.jpg)
+
+​      其大致流程为先从x0出发到x1，x1返回结果到x0，在将该结果传到x2进行查找，最终再返回x0。 遍历图的方式为深度优先遍历查询。
+
+查询时我们还需要对其进行排序，排序有两个原则：
+
+- 质量传播原则：一个元素的分数可以看成是其质量(quality)的度量,质量传播即通过更新这个分数同时反应该元素的相邻元素的质量。    
+- 数量聚合:除质量外,还考虑邻居的数量。因此,如果有更多的邻居,元素排名会更高。
+
+如何将排序紧密结合到基本操作中呢？
+
+- Ascending IntegerStream (AIS)
+- 基本检索：给定field f和 term t, b(f, t) 从倒排索引中检索出posting list， 并输出一个Ascending Integer List (AIS)。    
+- 归并排序：S1 和 S2 是两个AIS ， ![[公式]](pelhans.assets/equation-20200904172259633) 计算S1 and S2的交集    
+- 关系扩展：给定关系R和AIS S，计算集合
+   ![[公式]](pelhans.assets/equation-20200904172259658) 并将其作为AIS返回
+
+## 基于结构的分区和查询
+
+​      基于结构的索引和分区，需要将结构上相似的节点聚合到一起，同时结构上相似的节点在硬盘上连续存储。**基于结构感知(Structure-aware)的查询处理需要分两阶段匹配，第一个是只检索出匹配所查询的结构的数据，第二个是通过剪枝减少join和IO。**其流程如下图所示
+
+![img](pelhans.assets/v2-ac27e27709eebaf3a5dcc5822ebbe202_720w.jpg)
+
+​      一个数据图的索引建立和查询例子如下图所示：
+
+![img](pelhans.assets/v2-9d28fcd9927e35698e7c2c29f434c917_720w.jpg)
+
+![img](pelhans.assets/v2-c1e3c26af37cd42f81efac2418fb1d67_720w.jpg)
+
+​       首先用结构索引匹配查询在答案空间里检索和join，产生一组包含的数据元素匹配查询中的结构的结构索引。而后根据匹配的结构索引计算最终答案，其中剪枝仅包含非标识(non-distinguished)变量的树形查询部分。在资源空间检索和join:验证答案空间匹配中的元素是否也匹配具体的查询实体,即常量和标识(distinguished)变量。
+
+​      使用结构索引做结构匹配的有点是降低IO开销和union 和join操作的次数。
+
+## 多数据源搜索--以Hermes 为例
+
+![img](pelhans.assets/v2-08860998e9497c2baacb66ec65ad7926_720w.jpg)
+
+​      可以看出其大体分为三块，第一部分是数据源融合部分，第二部分是理解用户需求，最终是搜索和提炼。
+
+​      其知识融合部分流程为：
+
+![img](pelhans.assets/v2-38c42842649b80785f999a39cc4bccfb_720w.jpg)
+
+## 混合语义搜索
+
+​      下一代语义搜索系统结合了一系列技术,从基于统计的IR排序方法,有效索引和查询处理的数据库方法,到推理的复杂推理技术等等。一个混合的语义搜索系统应:
+
+- 结合文本，结构化和语义数据    
+- 以整体的方式管理不同类型的资源    
+- 支持结果为信息单元(文档，数据)的集成的检索。
+
+​      一个典型的系统架构是 ![[公式]](pelhans.assets/equation-20200904172259668) 。其流程图如下图所示:
+
+![img](pelhans.assets/v2-2eac34f93962bcc39fe30e52953b9df3_720w.jpg)
+
+​     上图中的OPT(occur probity table,  发生概率表)分为线上和线下两个步骤。对于线下步骤，数据图存储于DBMS中，除Entldx中的三元组(个体，关键词，"xxx")外，Doc  图存储在Docldx中，注释存储在Anntldx中。线上步骤将混合查询分解为一组原子查询(atomic  queries)；使用DB和IR引擎执行原子查询；根据生成的查询树合并部分结果；对最后的答案排序。
+
+## Ref
+
+[王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+编辑于 2018-07-07
+
+[自然语言处理](https://www.zhihu.com/topic/19560026)
+
+[知识图谱](https://www.zhihu.com/topic/19838204)
+
+# (九)  知识问答
+
+欢迎大家关注我的博客 [http://pelhans.com/](https://link.zhihu.com/?target=http%3A//pelhans.com/) ，所有文章都会第一时间发布在那里哦~
+
+------
+
+> 本节对知识问答的概念做一个概述并介绍KBQA实现过程中存在的挑战，而后对知识问答主流方法做一个简要介绍，具体内容还请查阅文末参考论文。
+
+## 知识问答简介
+
+问答系统的历史如下图所示：
+
+![img](pelhans.assets/v2-2a06a66bbf6b9a7a034243e07037209c_720w.jpg)
+
+可以看出，整体进程由基于模板到信息检索到基于知识库的问答。基于信息检索的问答算法是基于关键词匹配+信息抽取、浅层语义分析。基于社区的问答依赖于网民贡献，问答过程依赖于关键词检索技术。基于知识库的问答则基于语义解析和知识库。
+
+根据问答形式可以分为一问一答、交互式问答、阅读理解。一个经典的测评数据集为QALD，主要任务有三类：
+
+- 多语种问答，基于Dbpedia    
+- 问答基于链接数据    
+- Hybrid QA，基于RDF and free text data
+
+## 知识问答简单流程与分类
+
+![img](pelhans.assets/v2-a3c8a31c9cd041f56be2f336f68cfd7e_720w.jpg)
+
+上图为知识问答的简单流程，首先将用户输入的问句经过语义匹配等转换为查询语言进行查询和推理，而后得到答案再进行组合以形成人类可阅读的文本。
+
+传统的问答方法是基于符号表示的，常用的有：
+
+- 基于关键词的检索    
+- 基于文本蕴含推理    
+- 基于逻辑表达式
+
+一个简单的基于符号表示的例子如：
+
+![img](pelhans.assets/v2-3e3854901b61386269053bbe425d46ee_720w.jpg)
+
+基于深度学习的问答方法是基于分布式表示的，常用的有：
+
+- LSTM    
+- Attention Model    
+- Memory Network
+
+## KBQA的基本概念和挑战
+
+下面对一些基本概念做一个总结：
+
+- 问句短语定义问的是什么？ 如wh-words: who, what, when...    
+- 问题类型：问题类型决定了后续采用什么样的回答处理策略，如事实型问题、观点型问题、因果型问题、方法型问题等。    
+- 答案类型： 如实体、地理位置、时间等。    
+- 问题主题：问题是关于哪方面的？如 “世界上最高的山是？” 它就和地理、山峰这两个相关。    
+- 问答来源类型： 包含是不是结构化的数据、数据的来源等。    
+- 领域类型：如开放领域还是特定领域、多模态问答还是其他的。    
+- 答案格式：是司法文书还是定义式的短答案等。    
+- ......
+
+问答质量如何评估呢？一般有6个原则，包含相关度、正确度、精炼度、完备度、简单度、合理度。
+
+## 问答系统的基本组件
+
+如下图所示：
+
+![img](pelhans.assets/v2-2b09edfd47c36992a7aac1b93122f31b_720w.jpg)
+
+该系统使用自然语言问题作为输入，经由：
+
+- 数据预处理：处理数据库数据，包含索引、数据清理、特征提取等。    
+- 问题分析：执行语法分析，同时检测问题的核心特征，如NER、答案类型等。    
+- 数据匹配：将问题里的terms 和数据里的实体进行匹配。    
+- 查询创建：生成结构查询候选。    
+- 排序    
+- 结果返回与生成：执行查询并从结果里抽取答案。
+
+## 技术挑战
+
+- 怎样缩小自然语言和规范化结构化数据之间的鸿沟    
+- 怎样处理不完全、充满噪音和异构的数据集.    
+- 怎样处理大规模的知识图谱    
+- 怎样处理分布式数据集上的QA    
+- 怎样融合结构化和非结构化的数据    
+- 怎样降低维护成本    
+- 怎样能快速的复制到不同的领域
+
+## 知识问答主流方法介绍
+
+KBQA常用的主流方法有 基于模板的方法、基于语义解析的方法、基于深度学习的方法。下面分别对其进行详细介绍。
+
+## 基于模板的方法
+
+基于模板的方法包含模板定义、模板生成，模板匹配三大部分。论文参见[TBSL(Unger et al.2012)](https://link.zhihu.com/?target=https%3A//www2012.universite-lyon.fr/proceedings/proceedings/p639.pdf)。
+
+为了理解用户的问题，我们要理解：
+
+- 问题中的词汇：如died in ![[公式]](pelhans.assets/equation-20200904172320691) dbo:deathPalce
+- 问题的语义结构：如 the most N ![[公式]](pelhans.assets/equation-20200904172320694) ORDER BY DESC(COUNT(?N)) LIMIT 1
+
+基于模板问答的目标就是将语义结构分析和词映射到URIs，该方法有两个重要的步骤：
+
+- 模板生成：将问题解析为SPARQL模板，该模板能直接反应问题的结构如filters 和 aggregation 这样的操作。
+- 模板实例化：通过匹配自然语言表达式和本体概念来实例化SPARQL 模板。
+
+举个例子：
+
+![img](pelhans.assets/v2-a6b5f63874935e777c44af674ca60add_720w.jpg)
+
+TBSL的架构如下图所示：
+
+![img](pelhans.assets/v2-6b3f82417cd15c6905e1e30f292eb1ea_720w.jpg)
+
+## 模板定义
+
+结合KG的结构,以及问句的句式,进行模板定义。通常没有统一的标准或格式。TBSL的模板定义为SPARQL query模板,将其
+直接与自然语言相映射。
+
+## 模板生成
+
+模板生成大致分为如下四个步骤：
+
+- 获取自然语言问题的POS 标记信息    
+- 基于POS 标记、语法规则表示问句    
+- 利用领域相关或领域无关词汇辅助解决问题    
+- 最后将语义表示转化为一个SPARQL 模板    
+
+例如：
+
+
+
+![img](pelhans.assets/v2-59d67fe6799f98ac27edab9546da978d_720w.jpg)
+
+## 模板匹配与实例化
+
+有了SPARQL模板以后,需要**进行实例化与具体的自然语言问句相匹配**。即将自然语言问句与知识库中的本体概念相映射的过程。
+
+对于resource 和 class实体识别，用WordNet 定义知识库中标签常用方法或计算字符串相似度。对于property标签，将还需要与存储在BOA 模式库中的自然语言进行比较，最高排位的实体将作为填充查询槽位的候选答案。如：
+
+![img](pelhans.assets/v2-9347e6b0df863a75d5e9affbd8dcc1fd_720w.jpg)
+
+## 排序打分
+
+首先每个entity 根据 string similarity 和 prominence 获得一个打分。一个query 模板的分值根据填充slots 的多个entities 的平均打分。在检查type 类型后，对于全部的查询机和，仅返回打分最高的。
+
+## TBSL的主要缺点
+
+- 创建的模板未必和知识图谱中的数据建模相契合
+- 考虑到数据建模的各种可能性，对应到一个问题的潜在模板数量会非常多，同时手工准备海量模板的代价也非常大。
+
+那模板能否自动生成呢？据此有人提出了 [QUINT](https://link.zhihu.com/?target=http%3A//pdfs.semanticscholar.org/2230/816965e900ba76f3fe75a9575a927b3466d5.pdf),它能够根据utterance-answer 对， 根据依存树自动学习utterance-query 模板。该方法利用了自然语言组成的特点，可以使用从简单问题中学到的模板来解决复杂问题。QUINT架构如下图所示：
+
+![img](pelhans.assets/v2-c61c4ff68ad87dfdace3a0fefb55a020_720w.jpg)
+
+## 基于语义解析的方法
+
+语义解析经典方法[参考](https://link.zhihu.com/?target=https%3A//cs.stanford.edu/~pliang/papers/freebase-emnlp2013.pdf)
+
+基于语义解析的方法大致包含四个部分： 资源映射、逻辑表达式、候选答案生成、排序。
+
+![img](pelhans.assets/v2-693c68db594a530eab8823281e6956a4_720w.jpg)
+
+## 资源映射
+
+资源映射将自然语言短语或单词节点映射到知识库的 实体 或 实体关系。 可以通过构造一个词汇表(Lexicon)来完成这样的映射。而后通过逻辑表达式解决文本的歧义。对于复杂映射如"was  also born in" 到 PlaceOfBirth这种，就较难通过字符串匹配的方式建立映射，对此我们可以采用统计方法。如e1 和  e2经常出现在这两个词的两侧，那么我们就认为可以建立映射。
+
+![img](pelhans.assets/v2-258bc80d13525086cb96f703f77a1466_720w.jpg)
+
+## 逻辑表达式
+
+逻辑表达式是一种能让知识库”看懂“的表示，可以表示知识库中的实体、实体关系,并且可以想数据库语言一样，进行Join，求教及和聚合等操作。逻辑形式通常可分为一元形式和二元形式，一元实体是指对应知识库中的实体，二元实体关系是对应知识库中所有与该实体相关的三元组中的实体对。
+
+## 基于深度学习的方法
+
+KBQA 与深度学习结合的两个方向，第一个是利用深度学习对于传统问答方法进行改进，另一个是基于深度学习的端到端模型。
+
+![img](pelhans.assets/v2-6d760b675c2800a6c30e4d87838bed0e_720w.jpg)
+
+目前基于深度学习的方法无须像模板方法那样人工编写大量模板,也无须像语义分析方法中人工编写大量规则,整个过程都是自动进行。但缺点也很明显，它目前只能处理简单问题和单边关系，对于复杂问题不如两种传统方法效果好。同时由于DL方法通常不包含聚类操作，因此对于一些时序敏感性问题无法很好的处理。
+
+## Ref
+
+[王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+[Semantic parsing via paraphrasing](https://link.zhihu.com/?target=https%3A//nlp.stanford.edu/joberant/homepage_files/publications/ACL14.pdf)
+
+[Template-based question answering over RDF data](https://link.zhihu.com/?target=https%3A//www2012.universite-lyon.fr/proceedings/proceedings/p639.pdf)
+
+[Semantic Parsing via Staged Query Graph Generation: Question Answering with Knowledge Base](https://link.zhihu.com/?target=http%3A//www.anthology.aclweb.org/P/P15/P15-1128.pdf)
+
+[Semantic parsing on freebase from](https://link.zhihu.com/?target=http%3A//pdfs.semanticscholar.org/042d/b0977555fcd7d5eac67b26695cd918ecb44c.pdf)
+[question-answer pairs](https://link.zhihu.com/?target=http%3A//pdfs.semanticscholar.org/042d/b0977555fcd7d5eac67b26695cd918ecb44c.pdf)
+
+[An End-to-End Model for Question Answering over Knowledge Base with Cross-Attention Combining Global Knowledge Information](https://link.zhihu.com/?target=http%3A//wing.comp.nus.edu.sg/~antho/P/P17/P17-1021.pdf)
+
+[Question Answering over Freebase with Multi-Column Convolutional Neural Networks](https://link.zhihu.com/?target=http%3A//www.anthology.aclweb.org/P/P15/P15-1026.pdf)
+
+[Question Answering with Subgraph Embedding](https://link.zhihu.com/?target=http%3A//www.aclweb.org/anthology/D/D14/D14-1067.pdf)
+
+[A Graph Traversal Based Approach to Answer Non-Aggregation Questions over DBpedia ](https://link.zhihu.com/?target=http%3A//pdfs.semanticscholar.org/9222/c69ca851b26e8338b0082dfafbc663d1be50.pdf)
+
+[Automated Template Generation for Question Answering over Knowledge Graphs](https://link.zhihu.com/?target=http%3A//pdfs.semanticscholar.org/2230/816965e900ba76f3fe75a9575a927b3466d5.pdf)
 
 发布于 2018-07-07
 
