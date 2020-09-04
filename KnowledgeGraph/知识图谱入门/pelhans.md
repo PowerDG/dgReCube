@@ -637,6 +637,699 @@ OWL2 RL允许的核心词汇为：
 
 
 
+#  (四)  知识挖掘
+
+
+
+
+
+欢迎大家关注我的博客 [http://pelhans.com/](https://link.zhihu.com/?target=http%3A//pelhans.com/) ，所有文章都会第一时间发布在那里哦~
+
+------
+
+
+
+> 本节介绍了知识挖掘的相关技术，包含实体链接与消歧，知识规则挖掘，知识图谱表示学习。
+
+## 知识挖掘
+
+​         知识挖掘是指从数据中获取实体及新的实体链接和新的关联规则等信息。主要的技术包含实体的链接与消歧、知识规则挖掘、知识图谱表示学习等。其中实体链接与消歧为知识的内容挖掘，知识规则挖掘属于结构挖掘，表示学习则是将知识图谱映射到向量空间而后进行挖掘。
+
+## 实体消歧与链接
+
+![img](pelhans.assets/v2-7fe730d5624bf1dae9b48699445c61ef_720w-20200904171935423.jpg)
+
+​        实体链接的流程如上图所示，这张图在前一章出现过，那里对流程进行了简要说明。此处对该技术做进一步的说明。
+
+## 示例一: 基于生成模型的 entity-mention 模型
+
+![img](pelhans.assets/v2-f06be8c96a96fe8b46d21743bd588871_720w.jpg)
+
+​        该模型的流程如上图所示，文字表述为: 我们有两个句子，其中的实体分别为 Jordan(左)和 Michael  Jordan(右)，我们称之为Mention。我们想要判断这两个Jordan指的到底是篮球大神还是ML大神？ 这个问题可以用公式表述为:
+
+![[公式]](pelhans.assets/equation-20200904171935401) 
+
+等价于:
+
+![[公式]](pelhans.assets/equation-20200904171935442) 
+
+​        其中P(e)表示该实体的活跃度，P(s|e) 来自前面流程图中的实体引用表,它表示s作为实体的毛文本出现的概率，s表示名字。P(c|e )表示的是翻译概率(?)。
+
+简单来说就是根据mention所处的句子和上下文来判断该mention是某一实体的概率。
+
+## 示例二: 构建实体关联图
+
+![img](pelhans.assets/v2-2b94e48adf01412d4a2283163f9d0cc3_720w.jpg)
+
+​        实体关联图由3个部分组成： *每个顶点* ![[公式]](pelhans.assets/equation-20200904171935451) *由mention-entity构成。* 
+
+- 每个顶点得分：代表实体指称mi的目标实体为ei概率可能性大小。
+- 每条边的权重：代表语义关系计算值，表明顶点Vi和Vj的关联程度。
+
+​        其示例如上图所示，其流程包括：顶点的得分初始化方法、边权初始化方法和基于图的标签传播算法。
+
+## 顶点的初始化
+
+- 若顶点V实体不存在歧义，则顶点得分设置为1；    
+- 若顶点中mention和entity 满足 ![[公式]](pelhans.assets/equation?tex=p(e%7Cm)%5Cle+0.95) , 则顶点得分也设置为1.    
+- 其余顶点的得分设置为 ![[公式]](pelhans.assets/equation-20200904171935508) ;
+
+## 边的初始化 : 深度语义关系模型
+
+​        其大体流程如下图所示：
+
+![img](pelhans.assets/v2-9b05d8a92e171c3c6c90f24ad65d0d81_720w.jpg)
+
+​       其中E 表示实体， R表示关系， ET表示实体类型，D表示词。它做的是将这些东西映射到非常稀疏的空间内，而后通过深度学习进行特征提取和标注，最终给出每对实体见的分值。
+
+## 基于图的标签传播算法
+
+​       初始时，数据中的标签如左侧表格所示
+
+![img](pelhans.assets/v2-256a02413b437383494af58aba43ec93_720w.jpg)
+
+其中标签数据为无歧义的entity-mention，基于此数据，我们采用基于图的标签传播算法，先构造一个相似度矩阵，而后采用图的regulartion，直到最终标签确定。有点类似于协同消歧的作用。
+
+## 示例三：基于知识库
+
+![img](pelhans.assets/v2-2cdaa07f72dcafd110305a61ffadd32d_720w.jpg)
+
+其流程图如上图所示：
+
+- *首先我们有一个知识库，我们经由深度学习算法，将RDF三元组转化为实体向量。* 
+- 有了向量之后，我们就可以计算实体向量间的相似度。  
+- *基于相似度构建实体关联图。*
+- 基于PageRank算法更新实体关联图。
+
+下面对其中重要的部分做讲解。
+
+## 基于向量相似度的实体关联图的构建
+
+![img](pelhans.assets/v2-fc630f1d489c24c7bb96a1086aa23f78_720w.jpg)
+
+​        上图给出RDF三元组如何生成实体向量并计算实体向量间的相似度。对于相似度的度量可以采用cos函数等方式。即：
+
+![[公式]](pelhans.assets/equation-20200904171935468) 
+
+​        由此我们定义候选实体间的转化概率：
+
+![[公式]](pelhans.assets/equation-20200904171935458) 
+
+​         其中分母为该顶点的出度向量相似度求和。
+
+## 基于PageRank得分
+
+​        首先根据PageRank算法计算未消歧实体指称实体的得分，取得分最高的未消歧实体。而后删除其他候选实体及相关的边，更新图中的边权值。
+
+​         其流程如下图所示：
+
+![img](pelhans.assets/v2-a522c3c8b0dd9df22c2e6e51148e638e_720w.jpg)
+
+## 知识图谱表示学习(TranSE)
+
+表示学习即将三元组即各种关系映射成向量进行处理。
+
+![img](pelhans.assets/v2-84e34f023eb135b08c476875bede87b7_720w.jpg)
+
+​        一个典型的系统如上图所示，它将结构知识、文本知识和视觉知识结合进行输入得到一个综合的向量，而后将其与用户的行为向量进行匹配来完成推荐功能。
+
+## PRA 与 TranSE的结合
+
+​        表示学习无法处理一对多、多对一和多对多问题，同事可解释性不强。PRA难以处理稀疏关系、路径特征提取效率不高。因此两类方法之间存在互补性。因此提出了路径的表示学习等方法。
+
+## Ref
+
+[王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+
+
+# (五)  知识存储
+
+
+
+欢迎大家关注我的博客 [http://pelhans.com/](https://link.zhihu.com/?target=http%3A//pelhans.com/) ，所有文章都会第一时间发布在那里哦~
+
+------
+
+> 知识存储，即获取到的三元组和schema如何存储在计算机中。本节从以Jena为例，对知识在数据库中的导入、存储、查询、更新做一个简要的介绍，而后对主流的图数据库进行介绍。
+
+## 图数据库简介
+
+​       图数据库源起欧拉和图理论(graph theory),也称为面向/基于图的数据库，对应的英文是Graph  Database。图数据库的基本含义是以“图”这种数据结构存储和查询数据。它的数据模型主要是以节点和关系(边)来体现，也可以处理键值对。它的优点是快速解决复杂的关系问题。
+
+## Apache Jena
+
+​        Jena 是一个免费开源的支持构建语义网络和数据连接应用的Java框架。下图为Jena的框架：
+
+![img](pelhans.assets/v2-decb56016c7815dccd630177e7d98fc8_720w.jpg)
+
+​        其中，最底层的是数据库，包含SQL数据库和原生数据库，其中SDB用来导入SQL数据库，  TDB导入RDF三元组。数据库之上的是内建的和外联的推理接口。在往上的就是SPARQL查询接口了。通过直接使用SPARQL语言或通过REfO等模块转换成SPARQL语言进行查询。
+
+​        在上方我们看到有一个Fuseki模块，它相当于一个服务器端，我们的操作就是在它提供的端口上进行的。
+
+## 数据的导入
+
+​        数据导入分为两种方式，第一种是通过Fuseki的手动导入，第二种是通过TDB进行导入,对应的命令如下:
+
+```text
+/jena-fuseki/tdbloader --loc=/jena-fuseki/data filename
+```
+
+​         数据导入后就可以启动Fuseki了，对应的命令如下:
+
+```text
+/jena-fuseki/fuseki-server --loc=/jena-fuseki/data --update /music
+```
+
+## 查询
+
+​        查询也有两种方式，第一种就是简单直接的通过Fuseki界面查询，另一种就是使用endpoint接口查询。
+
+## Endpoint接口查询
+
+endpoint的SPARQL 查询网址为: http://localhost:3030/music/query;  
+
+更新网址为：http://localhost:3030/music/update .
+
+## 查询举例
+
+- 首先是最简单的单个语句查询,意在查询某一歌手所唱的所有歌曲：
+
+```text
+SELECT DISTINCT ?trackID
+WHERE {
+    ?trackID track_artist artistID
+
+}
+```
+
+可以看出查询语句整体和SQL很像的，下面多举几个例子。
+
+- 查询某一位歌手所有歌曲的歌曲名:
+
+```text
+SELECT ?name
+WHERE {
+    ?trackID track_artist artistID .
+    ?trackID track_name ?name
+
+}
+```
+
+- 使用CONCAT关键字进行连接，它的效果是在查询结果前增加一列叫专辑信息，它的结果以专辑名+ : + 查询结果组成：
+
+```text
+SELECT ?歌曲id ?专辑id (CONCAT("专辑
+                                   名",":",?专辑名) AS ?专辑信息)
+WHERE {
+    ?歌曲id track_name track_name .
+    ?歌曲id track_album ?专辑id .
+    ?专辑id album_name ?专辑名
+
+}"))
+```
+
+- 其余还有LIMIT 关键字限制查询结果的条数
+
+```text
+SELECT ?trackID
+WHERE {
+    ?albumID
+    album_name album_name .
+    ?trackID
+    track_album ?albumID
+
+}
+LIMIT 2
+```
+
+- 使用COUNT进行计数；
+
+```text
+SELECT (COUNT(?trackID) AS ?num)
+WHERE {
+    ?albumID album_name album_name .
+    ?trackID track_album ?albumID
+
+}
+```
+
+- 使用DISTINCT去重；
+
+```text
+SELECT DISTINCT ?tag_name
+WHERE {
+    ?trackID track_artist artistID .
+    ?trackID track_tag ?tag_name
+
+}
+```
+
+- ORDER BY排序；
+
+```text
+SELECT DISTINCT ?tag_name
+WHERE {
+    ?trackID track_artist artistID .
+    ?trackID track_tag ?tag_name
+
+}
+ORDER BY DESC(?tag_name)
+```
+
+- UNION进行联合查询
+
+```text
+SELECT (COUNT(?trackID ) AS ?num)
+WHERE {
+    {
+        ?trackID track_tag tag_name .
+
+    }
+    UNION
+    {
+        ?trackID track_tag tag_name2 .
+    }
+}
+```
+
+- 使用FILTER对结果进行过滤
+
+```text
+SELECT (count(?trackID ) as ?num)
+WHERE {
+    ?trackID track_tag ?trag_name
+    FILTER (?tag_name = tag_name1 ||
+           ?tag_name = tag_name2)
+
+}
+```
+
+- ASK来询问是否存在,回答结果只有True或False
+
+```text
+ASK
+{
+    ?trackID track_name ?track_name .
+    FILTER regex(?track_name,‖xx‖)
+
+}
+```
+
+## 更新举例
+
+在更新时要更换端口地址为: http://localhost:3030/music/update
+
+- 使用INSERT DATA操作，对数据的属性和事例进行添加
+
+```text
+INSERT DATA
+{
+    artistID artist_name artist_name .
+}
+```
+
+- 使用WHERE定位，DELETE删除事例
+
+```text
+DELETE
+{
+    artistID artist_name ?x .
+}
+WHERE
+{
+    artistID artist_name ?x .
+}
+```
+
+对于更多的SPARQL用法请参见[官方文档](https://link.zhihu.com/?target=https%3A//www.w3.org/TR/2013/REC-sparql11-query-20130321/)
+
+## 通过SPARQLWrapper 包查询和更新
+
+​         首先通过pip安装SPARQLWrapper，而后就可以通过下图所示的方式进行查询了。具体的查询语句与端口的一样，此处不再赘述。
+
+![img](pelhans.assets/v2-6a5062095b9226bb9a2cc6c301383ea0_720w.jpg)
+
+## 图数据库介绍
+
+​         图数据库很多，其中开源的如RDF4j、gStore等。商业数据库如Virtuoso、AllegroGraph、Stardog等。原生图数据库如Neo4j、OrientDB、Titan等，涉及内容较广，我也是刚刚入门，不足以从大体上介绍，因此只对我打算用的几个图数据库进行简单介绍，其余的可以自己查阅文档了解。
+
+​        图数据库的分类与发展如下图所示：
+
+![img](pelhans.assets/v2-5ca7294363d13c0c595782b538cfbf1d_720w.jpg)
+
+## 开源图数据库
+
+## [RDF4j](https://link.zhihu.com/?target=http%3A//docs.rdf4j.org/migration/)
+
+​        它是处理RDF数据的Java框架，使用简单可用的API来实现RDF存储。支持SPARQL 查询和两种RDF存储机制，支持所有主流的RDF格式。
+
+## [gStore](https://link.zhihu.com/?target=http%3A//www.gstore-pku.com/)
+
+​        gStore从图数据库角度存储和检索RDF知识图谱数据， gStore支持W3C定义的SPARQL  1.1标准,包括含有Union,OPTIONAL,FILTER和聚集函数的查询;gStore支持有效的增删改操作。  gStore单机可以支持1Billion(十亿)三元组规模的RDF知识图谱的数据管理任务。
+
+## 商业图数据库介绍
+
+## [Virtuoso](https://link.zhihu.com/?target=http%3A//virtuoso.openlinksw.com/)
+
+​         智能数据， 可视化与整合。可扩展和高性能数据管理，支持Web扩展和安全
+
+## [Allgrograph](https://link.zhihu.com/?target=http%3A//www.franz.com/agraph/allegrograph)
+
+​        AllegroGraph是一个现代的高性能的，支持永久存储的图数据库。它基于Restful接入支持多语言编程。具有强大的加载速度、查询速度和高性能。
+
+## 原生图数据库
+
+## Neo4j
+
+​        Neo4j是一个高性能的,NOSQL图形数据库，它将结构化数据存储在网络上而不是表中。它是一个嵌入式的、基于磁盘的、具备完全的事务特性的Java持久化引擎，但是它将结构化数据存储在网络(从数学角度叫做图)上而不是表中。Neo4j也可以被看作是一个高性能的图引擎，该引擎具有成熟数据库的所有特性。内置Cypher 查询语言。
+
+​        Neo4j具有以下特性：
+
+- 图数据库 + Lucene索引    
+- 支持图属性    
+- 支持ACID    
+- 高可用性    
+- 支持320亿的结点,320亿的关系结点,640亿的属性
+
+Neo4j的优点为：  
+
+- 高连通数据
+- 推荐
+- 路径查找
+- A*算法
+- 数据优先
+
+## Ref
+
+[王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+编辑于 2018-07-07
+
+
+
+#  (六)  知识融合
+
+欢迎大家关注我的博客 [http://pelhans.com/](https://link.zhihu.com/?target=http%3A//pelhans.com/) ，所有文章都会第一时间发布在那里哦~
+
+------
+
+
+
+> 本节主要介绍知识融合相关技术，首先介绍了什么是知识融合，其次对知识融合技术的流程做一个介绍并对知识融合常用工具做一个简单介绍。
+
+## 知识融合简介
+
+​        知识融合，即合并两个知识图谱(本体)，基本的问题都是研究怎样将来自多个来源的关于同一个实体或概念的描述信息融合起来。需要确认的是：  
+
+***  **等价实例  
+ \*** 等价类/子类  
+ \* 等价属性/子属性    
+
+![img](pelhans.assets/v2-7bccaee26efdcddb5f65c252aa6eaa2d_720w.jpg)
+
+​        一个例子如上图所示，图中不同颜色的圆圈代表不同的知识图谱来源，其中在[http://dbpedia.org](https://link.zhihu.com/?target=http%3A//dbpedia.org)中的Rome 和[http://geoname.org](https://link.zhihu.com/?target=http%3A//geoname.org)的roma是同一实体，通过两个sameAs链接。不同知识图谱间的实体对齐是KG融合的主要工作。
+
+​        除了实体对齐外，还有概念层的知识融合、跨语言的知识融合等工作。
+
+​        这里值得一提的是，在不同文献中，知识融合有不同的叫法，如本体对齐、本体匹配、Record Linkage、Entity Resolution、实体对齐等叫法，但它们的本质工作是一样的。
+
+​        知识融合的主要技术挑战为两点:  
+
+- *数据质量的挑战： 如命名模糊，数据输入错误、数据丢失、数据格式不一致、缩写等。*
+- 数据规模的挑战： 数据量大(并行计算)、数据种类多样性、不再仅仅通过名字匹配、多种关系、更多链接等。
+
+## 知识融合的基本技术流程
+
+​        知识融合一般分为两步,本体对齐和实体匹配两种的基本流程相似,如下:
+
+![img](pelhans.assets/v2-31f3028b83eaa7bfffa6c26184422505_720w.jpg)
+
+## 数据预处理
+
+​        数据预处理阶段，原始数据的质量会直接影响到最终链接的结果，不同的数据集对同一实体的描述方式往往是不相同的，对这些数据进行归一化是提高后续链接精确度的重要步骤。
+
+常用的数据预处理有： 
+
+- *语法正规化：*  
+
+​    ** 语法匹配： 如联系电话的表示方法*  
+
+​    ** 综合属性： 如家庭地址的表达方式*  
+
+数据正规化：  
+
+​    \* 移除空格、《》、“”、-等符号  
+
+​    \* 输入错误类的拓扑错误  
+
+​    \* 用正式名字替换昵称和缩写等
+
+## 记录连接
+
+​       假设两个实体的记录x 和y， x和y在第i个属性上的值是 ![[公式]](pelhans.assets/equation-20200904172032227) , 那么通过如下两步进行记录连接：
+
+- 属性相似度： 综合单个属性相似度得到属性相似度向量:  
+   ![[公式]](pelhans.assets/equation-20200904172032244) 
+- 实体相似度： 根据属性相似度向量得到一个实体的相似度。
+
+## 属性相似度的计算
+
+​       属性相似度的计算有多种方法，常用的有编辑距离、集合相似度计算、基于向量的相似度计算等。
+
+- 编辑距离： Levenstein、 Wagner and Fisher、 Edit Distance with Afine Gaps    
+- 集合相似度计算： Jaccard系数， Dice    
+- 基于向量的相似度计算： Cosine相似度、TFIDF相似度    
+- ......
+
+## 编辑距离计算属性相似度
+
+## Levenshtein Distance
+
+​        Levenshtein 距离，即最小编辑距离，目的是用最少的编辑操作将一个字符串转换成另一个.举个例子,计算Lvensshtain 与 Levenshtein 间的编辑距离:
+
+![[公式]](pelhans.assets/equation-20200904172032226) 
+
+ ![[公式]](pelhans.assets/equation-20200904172032232) 
+
+ ![[公式]](pelhans.assets/equation-20200904172032227-9211232.) 
+
+上述讲 Lvensshtain转换为Levenshtein ，总共操作3次，编辑距离也就是3。
+
+Levenstein Distance 是典型的动态规划问题，可以通过动态规划算法计算，具体公式如下：
+
+![[公式]](pelhans.assets/equation?tex=%5Cleft%5C%7B+%5Cbegin%7Baligned%7D+D(0%252C+0)+%2526+%253D+%2526+0+%2526+/+D(i%252C+0)+%2526+%253D+%2526+D(i-1%252C+0)+%252B+1+%2526+~~~1+%3C+i+%5Cle+N+/+D(0%252C+j)+%2526+%253D+%2526+D(0%252C+j-1)+%252B+1+%2526+~~~+1+%3C+j+%5Cle+M+%5Cend%7Baligned%7D+%5Cright.) 
+
+![[公式]](pelhans.assets/equation?tex=D(i%252C+j)+%253D+min%5Cleft%5C%7B+%5Cbegin%7Baligned%7D+D(i-1%252C+j)+%252B+1+/+D(i%252C+j-1)+%252B+1+/+D(i-1.+j-1)+%252B+1+%5Cend%7Baligned%7D+%5Cright.) 
+
+​         其中， +1 表示的是插入，删除和替换操作的代价。
+
+## Wagner and Fisher Distance
+
+它是Levenshtein距离的一个扩展，将这个模型中的编辑操作的代价赋予了不同的权重，如下：
+
+![[公式]](pelhans.assets/equation?tex=%5Cleft%5C%7B+%5Cbegin%7Baligned%7D+D(0%252C+0)+%2526+%253D+%2526+0+%2526+/+D(i%252C+0)+%2526+%253D+%2526+D(i-1%252C+0)+%252B+del%5Bx(i)%5D+%2526+~~~1+%3C+i+%5Cle+N+/+D(0%252C+j)+%2526+%253D+%2526+D(0%252C+j-1)+%252B+del%5By(j)%5D+%2526+~~~+1+%3C+j+%5Cle+M+%5Cend%7Baligned%7D+%5Cright.) 
+
+![[公式]](pelhans.assets/equation?tex=D(i%252C+j)+%253D+min%5Cleft%5C%7B+%5Cbegin%7Baligned%7D+D(i-1%252C+j)+%252B+del%5Bx(i)%5D+/+D(i%252C+j-1)+%252B+ins%5By(j)%5D+/+D(i-1.+j-1)+%252B+sun%5Bx(i)%252C+y(j)%5D+%5Cend%7Baligned%7D+%5Cright.) 
+
+其中del、ins和sub分别是删除、插入和替换的代价。
+
+## Edit Distance with affine gaps
+
+​        在上面的两种算法基础上，引入了gap的概念，将上述的插入、删除和替换操作用gap opening 和gap extension代替，编辑操作的代价也就表示为：
+
+![[公式]](pelhans.assets/equation-20200904172032288) 
+
+​        其中s 是open extension的代价， e是extend gap的代价，l是gap的长度。如计算 Lvensshtain 与  Levenshtein间的距离，首先将两个单词首尾对齐，将对应缺少的部分视为gap，如下图中上面和下面单词相比少了第一个e和倒数第三个的e，这是两个gap。下面的单词与上面的比则少了一个s和a，这又是两个gap。加一起一共4个gap，每个长度为1.因此编辑距离为:
+
+![[公式]](pelhans.assets/equation-20200904172032294) 
+
+## 集合相似度计算属性相似度
+
+## Dice系数
+
+​        Dice系数用于度量两个集合的相似性，因为可以把字符串理解为一种集合，因此Dice距离也会用于度量字符串的相似性，Dice系数定义如下：
+
+![[公式]](pelhans.assets/equation-20200904172032278) 
+
+以Lvensshtain 和 Levenshtein为例，两者的相似度为 2 * 9 / (11+11) = 0.82。
+
+## Jaccard系数
+
+Jaccard 系数适合处理短文本的相似度，定义如下：
+
+![[公式]](pelhans.assets/equation-20200904172032313) 
+
+可以看出与Dice系数的定义比较相似。两种方法,将文本转换为集合,除了可以用符号分格单词外,还可以考虑用n-gram分割单词,用n-gram分割句子等来构建集合,计算相似度。
+
+## TF-IDF 基于向量的相似度
+
+TF-IDF主要用来评估某个字或者用某个词对一个文档的重要程度。其中:
+
+![[公式]](pelhans.assets/equation-20200904172032312) 
+
+![[公式]](pelhans.assets/equation-20200904172032308) 
+
+举个例子，比如某个语料库中有5万篇文章,含有“健康”的有2万篇,现有一篇文章,共1000个词,‘健康’出现30次,则sim TF-IDF = 30/1000 * log(50000/(20000+1)) = 0.012。
+
+## 实体相似度的计算
+
+计算实体相似度可从三大方面入手，即聚合、聚类和表示学习。其中： 
+
+
+
+- *聚合：加权平均、手动制定规则、分类器*
+- 聚类：层次聚类、相关性聚类、Canopy + K-means
+- 表示学习
+
+下面对其进行一一详解。
+
+## 聚合
+
+​      加权平均方法，即对相似度得分向量的各个分量进行加权求和，得到最终的实体相似度：
+
+![[公式]](pelhans.assets/equation-20200904172032325) 
+
+​        手动制定规则就是给每一个相似度向量的分量设置一个阈值，若超过该阈值则将两实体相连:
+
+![[公式]](pelhans.assets/equation-20200904172032335) 
+
+​        对于分类器等机器学习方法，最大的问题是如何生成训练集合，对于此可采用无监督/半监督训练，如EM、生成模型等。或主动学习如众包等方案。
+
+## 聚类
+
+​        聚类又可分为层次聚类、相关性聚类、Canopy + K-means等。
+
+## 层次聚类
+
+​        层次聚类 (Hierarchical Clustering) 通过计算不同类别数据点之间的相似度对在不同的层次的数据进行划分,最终形成树状的聚类结构。
+
+​        底层的原始数据可以通过相似度函数计算，类之间的相似度有如下三种算法：
+
+- SL(Single Linkage)算法： SL算法又称为最邻近算法 (nearest-neighbor),是用两个类数据点中距离最近的两个数据点间的相似度作为这两个类的距离。    
+- CL (Complete Linkage)算法: 与SL不同的是取两个类中距离最远的两个点的相似度作为两个类的相似度。    
+- AL (Average Linkage) 算法: 用两个类中所有点之间相似度的均值作为类间相似度。
+
+​        举个例子， 有下图的数据，用欧氏距离和SL进行层次聚类。
+
+![img](pelhans.assets/v2-63c36a539769121cd6a1f0080a9456ab_720w.jpg)
+
+
+
+​         这样结果就变成：
+
+![img](pelhans.assets/v2-0abce5afe722cca2b4ebb370aa7e752f_720w.jpg)
+
+​        如此往复就得到最终的分类表:
+
+![img](pelhans.assets/v2-ec0effe1a0f1a5abe613832511d2edfb_720w.jpg)
+
+## 相关性聚类
+
+![[公式]](pelhans.assets/equation-20200904172032342) 表示x,y被分配在同一类中, ![[公式]](pelhans.assets/equation-20200904172032351) 代表x,y是同一类的概率 (x,y之间的相似度), ![[公式]](pelhans.assets/equation-20200904172032352) 和 ![[公式]](pelhans.assets/equation-20200904172032356) 分别是切断x,y之间的边的代价和保留边的代价。相关性聚类的目标就是使用最小的代价找到一个聚类方案。
+
+![[公式]](pelhans.assets/equation-20200904172032373) 
+
+​        是一个NP-Hard问题，可用贪婪算法近似求解。
+
+## Canopy + K-means
+
+​        与K-means不同,Canopy聚类最大的特点是不需要事先指定k值 (即clustering的个数),因此具有很大的实际应用价值,经常将Canopy和K-means配合使用。
+
+用图形表达流程如下图所示：
+
+![img](pelhans.assets/v2-645a51b806792c6c861601c33b5ffb42_720w.jpg)
+
+​         文字表述为：初始时有一个大的list，其中list中每个点都是一个canopy，设置阈值T1，T2。随机玄奇List中的点P，并计算list中其他的点到点P的距离d，把所有距离d小于T1的点生成Canopy，去除list中d小于T2的点。如此往复这个过程就得到了聚类结果。生成Canopy的过程就像以T2为中心扣下来一块，然后剩下的环就是Canopy。这样一块一块的扣就知道最终list为空。
+
+![img](pelhans.assets/v2-0ad8a70555e529e50fe4cd23e164d51d_720w.jpg)
+
+## 知识表示学习--知识嵌入
+
+​        将知识图谱中的实体和关系都映射低维空间向量,直接用数学表达式来计算各个实体之间相似度。这类方法不依赖任何的文本信息,获取到的都是数据的深度特征。
+
+​        将两个知识图谱映射到同一空间的方法有很多种，它们的桥梁是预连接实体对(训练数据),具体可以看详细论文。
+
+​        完成映射后如何进行实体链接呢？KG向量训练达到稳定状态之后,对于KG1每一个没有找到链接的实体,在KG2中找到与之距离最近的实体向量进行链接,距离计算方法可采用任何向量之间的距离计算,例如欧式距离或Cosine距离。
+
+## 分块
+
+​        分块 (Blocking)是从给定的知识库中的所有实体对中,选出潜在匹配的记录对作为候选项,并将候选项的大小尽可能的缩小。这么做的原因很简单，因为数据太多了。。。我们不可能去一一连接。
+
+​        常用的分块方法有基于Hash函数的分块、邻近分块等。
+
+​        首先介绍基于Hash函数的分块。对于记录x,有 ![[公式]](pelhans.assets/equation-20200904172032377) ,则x映射到与关键字 ![[公式]](pelhans.assets/equation-20200904172032397) 绑定的块 ![[公式]](pelhans.assets/equation-20200904172032391) 上。常见的Hash函数有：  
+
+
+
+- *字符串的前n个字*
+- n-grams
+- 结合多个简单的hash函数等
+
+邻近分块算法包含Canopy聚类、排序邻居算法、Red-Blue Set Cover等。
+
+## 负载均衡
+
+​        负载均衡 (Load Balance)来保证所有块中的实体数目相当,从而保证分块对性能的提升程度。最简单的方法是多次Map-Reduce操作。
+
+## 典型知识融合工具简介
+
+## 本体对齐-[Falcon-AO](https://link.zhihu.com/?target=http%3A//ws.nju.edu.cn/falcon-ao/)
+
+​        Falcon-AO是一个自动的本体匹配系统,已经成为RDF(S)和OWL所表达的Web本体相匹配的一种实用和流行的选择。编程语言为Java。其结构如下图所示：
+
+![img](pelhans.assets/v2-079c41f33b99c55e6c2807041f1e9b6d_720w.jpg)
+
+
+
+​        此处主要介绍它的匹配算法库，其余部分可查看官方文档。
+
+​         匹配算法库包含V-Doc、I-sub、GMO、PBM四个算法。其中V-Doc即基于虚拟文档的语言学匹配，它是将实体及其周围的实体、名词、文本等信息作一个集合形成虚拟文档的形式。这样我们就可以用TD-IDF等算法进行操作。I-Sub是基于编辑距离的字符串匹配，这个前面我们有详细介绍。可以看出，I-Sub和V-Doc都是基于字符串或文本级别的处理。更进一步的就有了GMO，它是对RDF本体的图结构上做的匹配。PBM则基于分而治之的思想做。
+
+​        计算相似度的组合策略如下图所示:
+
+![img](pelhans.assets/v2-6e310a35cc949fc86b65630d824be886_720w.jpg)
+
+
+
+​        首先经由PBM进行分而治之，后进入到V-Doc和 I-Sub ，GMO接收两者的输出做进一步处理，GMO的输出连同V-Doc和I-Sub的输出经由最终的贪心算法进行选取。
+
+## Limes 实体匹配
+
+​      Limes是一个基于度量空间的实体匹配发现框架,适合于大规模数据链接,编程语言是Java。其整体框架如下图所示：
+
+![img](pelhans.assets/v2-4527abf03bf8b92b9ef2652e2a9646d4_720w.jpg)
+
+​      该整体流程用文字表述为：
+
+- 给定源数据集S,目标数据集T,阈值 ![[公式]](pelhans.assets/equation-20200904172032389) ；   
+- 样本选取: 从T中选取样本点E来代表T中数据，所谓样本点,也就是能代表距离空间的点。应该在距离空间上均匀分布,各个样本之间距离尽可能大。；    
+- 过滤: 计算 ![[公式]](pelhans.assets/equation-20200904172032396) 与 ![[公式]](pelhans.assets/equation-20200904172032415) 之间的距离m(s, e),利用三角不等式进行过滤；    
+- 相似度计算: 同上;    
+- 序列化: 存储为用户指定格式;
+
+## 三角不等式过滤
+
+给定 (A,m),m是度量标准,相当于相似性函数,A中的点x,y和z相当于三条记录,根据三角不等式有:
+
+![[公式]](pelhans.assets/equation-20200904172032428) 
+
+上式通过推理可以得到:
+
+![[公式]](pelhans.assets/equation-20200904172032430) 
+
+上式中y相当于样本点。因为样本点E的数量是远小于目标数据集T的数量,所以过滤这一步会急剧减少后续相似性比较的次数,因而对大规模的web数据,这是非常高效的算法。
+
+## Ref
+
+[王昊奋知识图谱教程](https://link.zhihu.com/?target=http%3A//www.chinahadoop.cn/course/1048)
+
+发布于 2018-07-07
+
+
+
+
+
 
 
 # END
