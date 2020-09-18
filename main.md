@@ -23,7 +23,9 @@ https://blog.csdn.net/qq_43522113/article/details/89237353
 1. 搜索一个关键词，它返回关于这个关键词的各方面信息
 
 百度百科其实就是一个大的中文知识图谱，它把中文中各种各样的“知识”连接起来，可以理解为一个大的知识网络。大家都知道点开百度百科过后里面有许多词都是超链接，一点又进入另一个词条的界面，于是整个中文知识网络大概就有了了如下的结构：
- ![在这里插入图片描述](main.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQzNTIyMTEz,size_16,color_FFFFFF,t_70.png)
+
+![head](main.assets/head.png)
+
  无数的知识点被相互串联起来并且互通。
 
 2在知识图谱搜索中，电脑“理解”了你输入的内容，从而返回了更为精确的结果：
