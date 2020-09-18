@@ -4,11 +4,11 @@
 
 
 
+Mac的pytorch 跑不了显卡
 
+8G显存能跑bert吗
 
-
-
-
+bert，transformer，seq2seq那些
 
 
 
