@@ -18,7 +18,26 @@
 
 
 
-\* 在NIPS/ICML/ICLR/CVPR/KDD等顶会有发表过论文；                            
+\* 在NIPS/ICML/ICLR/CVPR/KDD等顶会有发表过论文；        
+
+
+
+https://www.jobui.com/gangwei/zhishitupugongchengshi/
+
+岗位职责：
+ 1、调研知识图谱相关常用算法，实现知识融合，知识推理等；
+ 2、负责相关行业的知识图谱的建设。
+ 岗位要求：
+ 1、正规院校本科及以上学历，软件、计算机、统计、数学等相关专业；
+
+熟悉知识本体和本体建模，熟练掌握知识图谱的构建和应用等技术，熟悉信息抽取和知识管理；
+ 3、掌握Entity Linking, Relation Extraction以及图谱相关算法；
+ 4、熟悉至少一种图数据库（Neo4j, Titan, OrientDB），熟悉图查询语言Cypher或Gremlin之一；
+ 5、具有图谱构建，图谱上的应用等实际应用经验者优先；
+                                        
+ 6、良好的学习能力、沟通能力、团队协作能力、及分析问题解决问题能力，责任心强。 							
+
+​                    
 
 
 
